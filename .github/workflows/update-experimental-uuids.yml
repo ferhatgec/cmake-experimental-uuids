@@ -1,0 +1,60 @@
+name: Update or Check CMake Experimental UUIDs
+
+# 06:17 AM UTC picked at random
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "cmake_experimental_uuids.py"
+      - ".github/workflows/update-experimental-uuids.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-experimental-uuids
+  cancel-in-progress: false
+
+jobs:
+  update-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run generator script
+        run: python3 cmake_experimental_uuids.py
+
+      # never push output that CMake can't even parse. CMake parses the whole
+      # file up front and 99.0.0 takes every module's newest branch so a
+      # non-zero exit here means broken generated code.
+      - name: Smoke-test generated modules
+        run: |
+          cmake --version | head -n1
+          for f in cmake/*.cmake; do
+            printf 'set(CMAKE_VERSION "99.0.0")\ninclude("%s/%s")\n' "$PWD" "$f" > "$RUNNER_TEMP/smoke.cmake"
+            cmake -P "$RUNNER_TEMP/smoke.cmake" || { echo "::error file=$f::module failed to run"; exit 1; }
+          done
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cmake/ CMakeLists.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "Update: CMake experimental UUIDs"
+            git push
+          elif [ $(( $(date +%s) - $(git log -1 --format=%ct) )) -gt $(( 45 * 86400 )) ]; then
+            # public repos get their scheduled workflows disabled after 60 days
+            # without activity; UUIDs only change a few times a year.
+            git commit --allow-empty -m "Chore: keepalive"
+            git push
+          fi
