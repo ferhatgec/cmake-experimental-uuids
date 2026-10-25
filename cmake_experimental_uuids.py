@@ -5,14 +5,16 @@ import http.client
 import os
 import re
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 BASE_URL = "https://raw.githubusercontent.com/Kitware/CMake/refs/tags/v{version}/Help/dev/experimental.rst"
 FEATURE_REGEX = re.compile(
   r"[Vv]ariable:?\s+``(CMAKE_EXPERIMENTAL_[A-Z0-9_]+)``(?:\s+to)?\s+(?:\*\s+)?[Vv]alue:?\s+``([0-9a-fA-F-]+)``"
 )
+README_BEGIN = "<!-- BEGIN GENERATED MODULES -->"
+README_END = "<!-- END GENERATED MODULES -->"
 MENTION_REGEX = re.compile(r"``(CMAKE_EXPERIMENTAL_[A-Z0-9_]+)``")
 
 
@@ -193,6 +195,34 @@ def generate_cmake_script(var_name, transitions, rc_overrides, output_dir="cmake
   print(f"[*] Generated {output_path}")
 
 
+def update_readme_modules(var_names, readme_path="README.md"):
+  # keeps the "Available Modules" table in the README in sync with cmake/.
+  if not os.path.exists(readme_path):
+    return
+
+  with open(readme_path, encoding="utf-8") as f:
+    text = f.read()
+
+  begin = text.find(README_BEGIN)
+  end = text.find(README_END)
+  if begin == -1 or end == -1 or end < begin:
+    print(f"::warning::{readme_path}: missing or misordered {README_BEGIN} / {README_END} markers, table not updated")
+    return
+
+  rows = ["| Module | CMake Variable |", "| :--- | :--- |"]
+  for var_name in var_names:
+    rows.append(f"| `include({var_to_module_name(var_name)})` | `{var_name}` |")
+
+  new_text = (
+    text[: begin + len(README_BEGIN)] + "\n" + "\n".join(rows) + "\n" + text[end:]
+  )
+  if new_text != text:
+    with open(readme_path, "w", encoding="utf-8", newline="\n") as f:
+      f.write(new_text)
+
+  print(f"[*] Updated {readme_path} ({len(var_names)} modules)")
+
+
 def generate_root_cmakelists(raw_versions, output_path="CMakeLists.txt"):
   if not raw_versions:
     return
@@ -236,3 +266,4 @@ if __name__ == "__main__":
     generate_cmake_script(var_name, transitions, overrides)
 
   generate_root_cmakelists(raw_versions)
+  update_readme_modules(all_features)

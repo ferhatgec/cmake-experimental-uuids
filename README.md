@@ -13,7 +13,7 @@ When an experimental feature graduates in a newer CMake release, the correspondi
 ### Via `FetchContent`
 
 ```cmake
-cmake_minimum_required(VERSION 3.30...4.5.0)
+cmake_minimum_required(VERSION 3.30)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -35,7 +35,7 @@ set(CMAKE_CXX_MODULE_STD ON)
 ### Via `file(DOWNLOAD)` (Single Module)
 
 ```cmake
-cmake_minimum_required(VERSION 3.30...4.5.0)
+cmake_minimum_required(VERSION 3.30)
 
 set(_uuid_module "${CMAKE_BINARY_DIR}/cmake/ExperimentalCxxImportStd.cmake")
 file(
@@ -55,7 +55,7 @@ project(example LANGUAGES CXX)
 ```
 
 ## Available Modules
-
+<!-- BEGIN GENERATED MODULES -->
 | Module | CMake Variable |
 | :--- | :--- |
 | `include(ExperimentalCxxImportStd)` | `CMAKE_EXPERIMENTAL_CXX_IMPORT_STD` |
@@ -68,6 +68,7 @@ project(example LANGUAGES CXX)
 | `include(ExperimentalMappedPackageInfo)` | `CMAKE_EXPERIMENTAL_MAPPED_PACKAGE_INFO` |
 | `include(ExperimentalRust)` | `CMAKE_EXPERIMENTAL_RUST` |
 | `include(ExperimentalSycl)` | `CMAKE_EXPERIMENTAL_SYCL` |
+<!-- END GENERATED MODULES -->
 
 ## License
 
