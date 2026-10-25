@@ -157,10 +157,19 @@ def generate_cmake_script(var_name, transitions, rc_overrides, output_dir="cmake
   output_path = os.path.join(output_dir, f"{module_name}.cmake")
   min_version = transitions[0][0]
 
+  applied_var = f"{module_name}_APPLIED"
+
   lines = [
     "if(DEFINED PROJECT_NAME)",
-    f'  message(FATAL_ERROR "{module_name} must be included before project()!")',
+    f"  if(NOT {applied_var})",
+    f'    message(FATAL_ERROR "{module_name} must be included before project()! "',
+    '      "When this is a subproject, include it in the top-level project instead.")',
+    "  endif()",
+    "  # a parent scope (usually the top-level project) already applied this module",
+    "  return()",
     "endif()",
+    "",
+    f"set({applied_var} ON)",
     "",
     f'if(CMAKE_VERSION VERSION_LESS "{min_version}")',
     f'  message(FATAL_ERROR "{var_name} requires CMake {min_version} or newer.")',
@@ -232,10 +241,6 @@ def generate_root_cmakelists(raw_versions, output_path="CMakeLists.txt"):
 
   lines = [
     f"cmake_minimum_required(VERSION {min_ver}...{max_ver})",
-    "",
-    "if(DEFINED PROJECT_NAME)",
-    '  message(FATAL_ERROR "cmake-experimental-uuids must be fetched before project()!")',
-    "endif()",
     "",
     'list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")',
     "",

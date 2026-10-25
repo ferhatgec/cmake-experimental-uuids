@@ -1,6 +1,13 @@
 if(DEFINED PROJECT_NAME)
-  message(FATAL_ERROR "ExperimentalGenerateSbom must be included before project()!")
+  if(NOT ExperimentalGenerateSbom_APPLIED)
+    message(FATAL_ERROR "ExperimentalGenerateSbom must be included before project()! "
+      "When this is a subproject, include it in the top-level project instead.")
+  endif()
+  # a parent scope (usually the top-level project) already applied this module
+  return()
 endif()
+
+set(ExperimentalGenerateSbom_APPLIED ON)
 
 if(CMAKE_VERSION VERSION_LESS "4.3.0")
   message(FATAL_ERROR "CMAKE_EXPERIMENTAL_GENERATE_SBOM requires CMake 4.3.0 or newer.")

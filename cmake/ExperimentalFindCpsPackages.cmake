@@ -1,6 +1,13 @@
 if(DEFINED PROJECT_NAME)
-  message(FATAL_ERROR "ExperimentalFindCpsPackages must be included before project()!")
+  if(NOT ExperimentalFindCpsPackages_APPLIED)
+    message(FATAL_ERROR "ExperimentalFindCpsPackages must be included before project()! "
+      "When this is a subproject, include it in the top-level project instead.")
+  endif()
+  # a parent scope (usually the top-level project) already applied this module
+  return()
 endif()
+
+set(ExperimentalFindCpsPackages_APPLIED ON)
 
 if(CMAKE_VERSION VERSION_LESS "4.0.0")
   message(FATAL_ERROR "CMAKE_EXPERIMENTAL_FIND_CPS_PACKAGES requires CMake 4.0.0 or newer.")

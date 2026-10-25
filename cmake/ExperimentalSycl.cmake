@@ -1,6 +1,13 @@
 if(DEFINED PROJECT_NAME)
-  message(FATAL_ERROR "ExperimentalSycl must be included before project()!")
+  if(NOT ExperimentalSycl_APPLIED)
+    message(FATAL_ERROR "ExperimentalSycl must be included before project()! "
+      "When this is a subproject, include it in the top-level project instead.")
+  endif()
+  # a parent scope (usually the top-level project) already applied this module
+  return()
 endif()
+
+set(ExperimentalSycl_APPLIED ON)
 
 if(CMAKE_VERSION VERSION_LESS "4.5.0")
   message(FATAL_ERROR "CMAKE_EXPERIMENTAL_SYCL requires CMake 4.5.0 or newer.")
